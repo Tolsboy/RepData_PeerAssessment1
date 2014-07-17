@@ -2,19 +2,58 @@
 
 
 ## Loading and preprocessing the data
-
+```{r}
+data <- read.csv("activity.csv")
+data_rmna <- data[!is.na(data[,1]),]
+```
 
 
 ## What is mean total number of steps taken per day?
+```{r}
+dstp <- tapply(data_rmna$steps, data_rmna$date, sum)
+hist(dstp[!is.na(dstp)],xlab="Steps/day")
+mean(dstp[!is.na(dstp)])
+median(dstp[!is.na(dstp)])
+```
 
 
 
 ## What is the average daily activity pattern?
-
+```{r}
+itvstp <- tapply(data_rmna$steps, data_rmna$interval, mean)
+itv <- unique(data_rmna$interval)
+plot(itv, itvstp, xlab="time interval/min", ylab="# of steps", type="l")
+itv[itvstp==max(itvstp)]
+```
 
 
 ## Imputing missing values
-
+```{r}
+sum(is.na(data$steps))
+data_fill = data
+temp <- data_fill[is.na(data_fill$steps),3]
+stp_fill <- matrix(0, length(temp),1)
+for (s in c(1:length(temp))){
+    stp_fill[s] <- itvstp[itv==temp[s]]
+}
+data_fill[is.na(data_fill$steps),1]<-stp_fill
+dstp_fill <- tapply(data_fill$steps, data_fill$date, sum)
+hist(dstp_fill, xlab="Steps/day")
+mean(dstp_fill)
+median(dstp_fill)
+```
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r}
+data_fill$wdays = !(weekdays(as.Date(data$date)) %in% c("Saturday", "Sunday"))
+data_wkds <- data_fill[data_fill$wdays==1,]
+data_wked <- data_fill[data_fill$wdays==0,]
+stp_wkds <- tapply(data_wkds$steps, data_wkds$interval, mean)
+stp_wked <- tapply(data_wked$steps, data_wked$interval, mean)
+par(mfrow = c(2,1))
+plot(itv, stp_wkds, xlab="time interval/min", ylab="# of steps", type="l")
+title("weekdays")
+plot(itv, stp_wked, xlab="time interval/min", ylab="# of steps", type="l")
+title("weekends")
+```
